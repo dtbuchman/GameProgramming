@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="icon" type="image/ico" href="imgs/favi.ico"/>
+		<title> GALAXA </title>
+		<style type="text/css" src="css/style.css"></style>
+	</head>
+	<body background="imgs/backFrame.jpg">
+		
+		<script type="text/javascript" src="js/missile.js"></script>
+		<script type="text/javascript" src="js/enemy.js"></script>
+		<script type="text/javascript" src="js/miniboss.js"></script>
+		<script type="text/javascript" src="js/boss.js"></script>
+		<script type="text/javascript" src="js/lineupManager.js"></script>
+		<script type="text/javascript" src="js/enemyManager.js"></script>
+		<script type="text/javascript" src="js/player.js"></script>
+		<script type="text/javascript" src="js/bkAstrd.js"></script>
+		<script type="text/javascript" src="js/renderer.js"></script>
+
+
+		<div align="center">
+			<canvas id="canvas"  style="border:5px solid #151515;"></canvas>
+		</div>
+
+		<script type='text/javascript'>
+			window.requestAnimFrame = (function(){
+			  return  window.requestAnimationFrame       ||
+			          window.webkitRequestAnimationFrame ||
+			          window.mozRequestAnimationFrame    ||
+			          function( callback ){
+			            window.setTimeout(callback, 1000 / 60);
+			          };
+			})();
+
+			var allowInput;
+			var ctx;
+			var canvas;
+			var WIDTH;
+			var HEIGHT;
+
+			//framerate/system variables
+			var framerate = 150;
+			var frameTimer = 1000/framerate;
+			var currTime = Date.now();
+			var tempTime;
+			var deltaTime;
+
+
+			var rndr;
+			var plyr;
+
+			var gameOn;
+			var showMenu;
+			var gameStartDelay;
+			var showGUI = false;
+
+			//
+			//
+			var gameState;
+			var currWave;
+			var currStage;
+
+
+			//Input Vars
+			var rightDown = false;
+			var leftDown = false;
+			var upDown = false;
+			var downDown = false;
+			var spaceDown = false;
+			var ctrlDown  = false;
+
+			var em;
+			
+			var lastCalledTime;
+			var fps;
+			
+			var canTally;
+			var canShowFinalScore;
+			var canStartNewGame;
+
+			var canStartNewGameText;
+			var canDrawNewGameText;
+			var canDrawNewStartText;
+			//
+			//init sys
+			function init()
+			{
+				allowInput = true;
+				WIDTH = 800;
+				HEIGHT = 800;
+				canvas = document.getElementById('canvas');
+				canvas.width = WIDTH;
+				canvas.height = HEIGHT;
+				
+				plyr = new player();
+				rndr = new renderer();
+
+				ctx = canvas.getContext('2d');
+				gameOn = false;
+				showMenu = true;
+				canTally = false;
+				canShowFinalScore = false;
+				canStartNewGame = false;
+				canStartNewGameText = false;
+				canDrawNewGameText = false;
+				canDrawNewStartText = false;
+				gameStartDelay = 5;
+				
+
+				window.addEventListener('keydown',onKeyDown,true);
+				window.addEventListener('keyup',onKeyUp,true);
+
+				
+				mainGameManager();
+			}
+
+
+			//
+			//
+			function StartNewGame()
+			{
+				
+				showMenu = false; 
+				showGUI = true;
+				em = new enemyManager();
+				plyr = new player();
+				//setTimeout(gameStartDelay, Start);
+				//rndr.flashText(ctx, "STARTING NEW GAME!", 50);
+				//play music
+
+				
+				
+
+				Start();
+			}
+
+
+			function Start()
+			{
+				//From
+				//PAUSE/UNPAUSE or STASRT NEW GAME
+				gameOn = true;
+				canDrawNewGameText = true;
+				em.Start(ctx);				
+
+
+
+
+			}
+
+
+			//
+			//GAME MANAGER
+			function mainGameManager()
+			{
+				//update delta time
+				tempTime = Date.now();
+				deltaTime = tempTime - currTime;
+
+				//
+				//GAME LOGIC
+				//+++++++++++++
+				if(!gameOn)
+				{
+					if(showMenu)
+					{
+						if(spaceDown)
+						{
+							StartNewGame();
+						}
+					}	
+				}
+				else  //IF GAME IS ALREADY RUNNING
+				{
+					plyr.UpdatePlayer(ctx);
+					em.UpdateEnemies(ctx, plyr);
+
+
+				}
+
+				
+
+				//
+				//DRAW
+				rndr.draw(ctx, plyr, em);
+
+
+				if(canDrawNewGameText)//drawNEWGAMETEXT
+				{
+					//console.log("here");
+					ctx.font = '64px monospace';
+					ctx.fillStyle = "yellow";
+					ctx.fillText("New Game", canvas.width/2, 0.25*canvas.height);
+					setTimeout(function(){ resetStartGameText(); }, 1500);
+
+				}
+
+				if(canDrawNewStartText)
+				{
+					ctx.font = '64px monospace';
+					ctx.fillStyle = "yellow";
+					ctx.fillText("START", canvas.width/2, 0.45*canvas.height);
+					setTimeout(function(){ resetStartNewGameText(); }, 2500);
+				}
+
+
+				//
+				//update the GUI
+				if(em != null)
+				{
+					if(em.getCurrStage() == 4 && !gameOn)
+					{
+						//SCORE SCREEN
+						//console.log("Here");
+						plyr.setX(canvas.width/2-(plyr.getPlayerSize()/2));
+						plyr.setY(0.7*canvas.height);
+						ctx.font = '64px monospace';
+						ctx.fillStyle = "yellow";
+						ctx.fillText("GAMEOVER", canvas.width/2, 0.25*canvas.height);
+						setTimeout(function(){ tallyScore(); }, 1000);
+
+						if(canTally)
+						{
+							ctx.font = '28px monospace';
+							ctx.fillStyle = "yellow";
+							ctx.fillText("Final Score", canvas.width/2, 0.6*canvas.height);
+							setTimeout(function(){ showFinalScore(); }, 1200);
+
+						} 
+						if(canShowFinalScore)
+						{
+							ctx.font = '36px monospace';
+							ctx.fillStyle = "white";
+							ctx.fillText(plyr.getPlayerScore(), canvas.width/2, 0.65*canvas.height);
+
+							setTimeout(function(){ ableToStartNewGame(); }, 1200);
+
+						}
+						if(canStartNewGame)
+						{
+							//
+							
+							ctx.font = '42px monospace';
+							ctx.fillStyle = "yellow";
+							ctx.fillText("Press Spacebar to Start!", canvas.width/2, 0.4*canvas.height);
+
+							//
+							//START A NEW GAME!
+							if(spaceDown)
+							{
+								StartNewGame();
+							}
+						}
+					}
+				}
+
+
+
+				currTime = tempTime;
+				//setTimeout(mainGameManager, frameTimer);
+				requestAnimFrame(mainGameManager);
+
+			}
+
+
+			function tallyScore()
+			{
+				canTally = true; 
+			}
+
+			function showFinalScore()
+			{
+				canShowFinalScore = true;
+			}
+
+			function ableToStartNewGame()
+			{
+				canStartNewGame = true;
+			}
+
+
+			function resetStartGameText()
+			{
+				canDrawNewGameText = false;
+				canDrawNewStartText = true;
+			}
+
+			function resetStartNewGameText()
+			{
+				canDrawNewStartText = false;
+			}
+
+
+			//INPUT
+			function onKeyDown(evt) 
+			{
+				if(allowInput)
+				{
+					if (evt.keyCode == 39) 			rightDown = true;
+					else if (evt.keyCode == 37) 	leftDown = true;
+					else if (evt.keyCode == 38)		upDown = true;
+					else if (evt.keyCode == 40)		downDown = true;
+					else if(evt.keyCode == 32) 		spaceDown = true;
+					else if(evt.keyCode == 17) 		ctrlDown = true;
+				}
+			}
+
+			function onKeyUp(evt) 
+			{
+				if(allowInput)
+				{
+					if (evt.keyCode == 39) 			rightDown = false;
+					else if (evt.keyCode == 37) 	leftDown = false;
+					else if (evt.keyCode == 38) 	upDown = false;
+					else if (evt.keyCode == 40) 	downDown = false;
+					else if (evt.keyCode == 32) 	spaceDown = false;
+					else if(evt.keyCode == 17) 		ctrlDown = false;		
+				}
+			}
+
+			//
+			//initialize game
+			init();
+
+
+		</script>
+
+	</body>
+</html>

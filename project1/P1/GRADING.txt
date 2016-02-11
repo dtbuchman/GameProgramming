@@ -1,0 +1,32 @@
+Derek Buchman
+
+-----------------------------------
+++  Definition of Game Objects   ++
+-----------------------------------
+ --missiles
+ --enemy ships
+ --2 bosses
+ --player
+ --enemyManager
+ --LineupManager
+
+----------------------------------
+++  Animation of Game Objects   ++
+----------------------------------
+Enemies move and have sprites
+
+-----------------------------------------
+++  Interaction between Game Objects   ++
+-----------------------------------------
+Collisions and level management=
+
+-------------------
+++  Keeping Score ++
+-------------------
+Game keeps score, has 4 levels, and displays 
+a Final Score to the user at the end.
+
+-------------------
+++  Complexity   ++
+-------------------
+Harder than Pong

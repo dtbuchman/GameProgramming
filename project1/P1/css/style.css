@@ -1,0 +1,17 @@
+@font-face {
+    font-family: 'retro';
+    src: url('fonts/emulogic.ttf');
+}
+
+/* Global properties */
+html {
+	width:100%
+}
+body {
+	
+	vertical-align: middle;
+    text-align:center
+}
+
+#canvas{
+}
